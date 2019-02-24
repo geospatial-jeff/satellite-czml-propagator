@@ -6,12 +6,17 @@ from pyorbital.orbital import Orbital
 
 class Satellite(object):
 
-    def __init__(self, name, speed=60, orbit_count=1):
+    def __init__(self, name, speed=60, orbit_count=1, swath_color=(255, 0, 0, 127), track_color=(255, 255, 255, 200), swath_width=10000):
         self.name = name
         self.orbit = Orbital(name)
         self.NUM_STEPS = 255
         self.speed = speed
         self.orbit_count = orbit_count
+        self.swath_width = swath_width
+
+        # Styling
+        self.swath_color = swath_color
+        self.track_color = track_color
 
     @property
     def period(self):
@@ -73,7 +78,8 @@ class Satellite(object):
 
         # Path object
         path_object = {
-            'id': 'path',
+            'id': self.name + '/Propagated Orbit',
+            'name': self.name + ' Propagated Orbit',
             'availability': start_time + '/' + end_time,
             'position': {
                 'epoch': start_time,
@@ -84,10 +90,10 @@ class Satellite(object):
                 "material": {
                     "polylineOutline": {
                         "color": {
-                            "rgba": [255, 255, 255, 200]
+                            "rgba": self.track_color
                         },
                         "outlineColor": {
-                            "rgba": [0, 173, 253, 200]
+                            "rgba": [255, 255, 255, 200]
                         },
                         "outlineWidth": 5
                     }
@@ -100,7 +106,8 @@ class Satellite(object):
 
         # Point variable
         point_object = {
-            "id": "point",
+            "id": self.name + '/Satellite',
+            "name": self.name + " Satellite",
 
             "availability": start_time + '/' + end_time,
 
@@ -108,33 +115,49 @@ class Satellite(object):
                 "epoch": start_time,
                 "cartographicDegrees": ground_track
             },
-
-            "point": {
-                "color": {
-                    "rgba": [255, 255, 255, 255]
-                },
-                "outlineColor": {
-                    "rgba": [0, 173, 253, 255]
-                },
-                "outlineWidth": 15,
-                "heightReference": "RELATIVE_TO_GROUND"
+            "billboard": {
+                "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADJSURBVDhPnZHRDcMgEEMZjVEYpaNklIzSEfLfD4qNnXAJSFWfhO7w2Zc0Tf9QG2rXrEzSUeZLOGm47WoH95x3Hl3jEgilvDgsOQUTqsNl68ezEwn1vae6lceSEEYvvWNT/Rxc4CXQNGadho1NXoJ+9iaqc2xi2xbt23PJCDIB6TQjOC6Bho/sDy3fBQT8PrVhibU7yBFcEPaRxOoeTwbwByCOYf9VGp1BYI1BA+EeHhmfzKbBoJEQwn1yzUZtyspIQUha85MpkNIXB7GizqDEECsAAAAASUVORK5CYII=",
+                "scale": 2
+            },
+            "label":{
+              "fillColor":{
+                "rgba":[
+                  0,255,0,255
+                ]
+              },
+              "font":"15pt Lucida Console",
+              "horizontalOrigin":"LEFT",
+              "outlineColor":{
+                "rgba":[
+                  0,0,0,255
+                ]
+              },
+              "outlineWidth":4,
+              "pixelOffset":{
+                "cartesian2":[
+                  12,0
+                ]
+              },
+              "style":"FILL_AND_OUTLINE",
+              "text": self.name,
+              "verticalOrigin":"CENTER",
             }
         }
         output.append(point_object)
 
         # Corridor (swath width)
         corridor_object = {
-            'id': 'corridor',
-            'name': 'swath',
+            'id': self.name + '/Corridor',
+            'name': self.name + ' Ground Swath',
             'corridor': {
                 'positions': {
                     'cartographicDegrees': self.ground_track(time=False, altitude=False)
                 },
-                'width': 185000,
+                'width': self.swath_width,
                 "material": {
                     "solidColor": {
                         "color": {
-                            "rgba": [255, 0, 0, 127]
+                            "rgba": self.swath_color
                         }
                     }
                 }
