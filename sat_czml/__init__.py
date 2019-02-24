@@ -1,4 +1,6 @@
 import datetime
+from multiprocessing import Process, Pipe
+
 from pyorbital.orbital import Orbital
 
 
@@ -142,3 +144,41 @@ class Satellite(object):
         output.append(corridor_object)
 
         return output
+
+    def to_czml_multi(self, placeholder, conn):
+        conn.send(self.to_czml())
+        conn.close()
+
+class Constellation(object):
+
+    @classmethod
+    def load(cls, arg_list):
+        satellites = [Satellite(**x) for x in arg_list]
+        return cls(satellites)
+
+    def __init__(self, satellites):
+        self.satellites = satellites
+
+    def execute(self):
+        response = {}
+
+        processes = []
+        parent_connections = []
+
+        for satellite in self.satellites:
+            parent_conn, child_conn = Pipe()
+            parent_connections.append(parent_conn)
+            process = Process(target=satellite.to_czml_multi, args=('', child_conn))
+            processes.append(process)
+
+        for process in processes:
+            process.start()
+
+        for process in processes:
+            process.join()
+
+        for parent_connection in parent_connections:
+            resp = parent_connection.recv()
+            response.update({resp[0]['name']: resp})
+
+        return response
